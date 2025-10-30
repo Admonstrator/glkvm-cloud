@@ -47,6 +47,8 @@
 
 如果你的服务器提供商（如 AWS、阿里云等）启用了 **云安全组**，请确保以下端口已开放：
 
+**基础部署（自签名证书）：**
+
 | 端口    | 协议      | 用途                 |
 | ----- | ------- | ------------------ |
 | 443   | TCP     | 平台 Web UI 访问       |
@@ -54,8 +56,18 @@
 | 5912  | TCP     | 设备连接               |
 | 3478  | TCP/UDP | WebRTC TURN 中继服务支持 |
 
+**使用 Caddy 自动 HTTPS 时：**
+
+| 端口    | 协议      | 用途                 |
+| ----- | ------- | ------------------ |
+| 80    | TCP     | HTTP（自动重定向到 HTTPS）  |
+| 443   | TCP/UDP | HTTPS/HTTP3 Web UI 访问 |
+| 5912  | TCP     | 设备连接               |
+| 3478  | TCP/UDP | WebRTC TURN 中继服务支持 |
+
 ⚠️ **重要提示**：
-这些端口将被 **GLKVM 轻量云** 占用，请确保服务器上没有其他程序占用这些端口，否则平台可能无法正常启动。
+- 这些端口将被 **GLKVM 轻量云** 占用，请确保服务器上没有其他程序占用这些端口，否则平台可能无法正常启动。
+- 使用 Caddy 时，**端口 80 必须开放**，用于 Let's Encrypt HTTP-01 挑战验证。
 
 ## 📦 安装
 
@@ -66,6 +78,40 @@
 ```
 
 ### 🌐 平台访问
+
+### 使用 Caddy 自动 HTTPS（推荐用于生产环境）
+
+GLKVM 轻量云现在支持使用 Caddy 实现自动 HTTPS/TLS 证书管理。
+
+**主要优势：**
+- ✅ 自动从 Let's Encrypt 获取和续期 SSL 证书
+- ✅ 无需手动管理证书
+- ✅ 内置 HTTP 到 HTTPS 自动重定向
+- ✅ 支持 HTTP/3
+
+**快速配置：**
+
+1. 编辑 `.env` 文件设置域名：
+   ```bash
+   DOMAIN=kvm.example.com
+   ACME_EMAIL=admin@example.com
+   ```
+
+2. 使用 Caddy 启动服务：
+   ```bash
+   cd ~/glkvm_cloud
+   docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+   ```
+
+3. 通过域名访问：`https://kvm.example.com`
+
+**注意事项：**
+- 需要域名指向服务器 IP
+- 需要开放 80 和 443 端口
+- 需要提供有效的邮箱地址
+
+详细配置说明请参考：[docker-compose/README.md](docker-compose/README.md) 或 [English Documentation](README.md)
+
 
 安装完成后，你可以通过以下方式访问平台：
 
