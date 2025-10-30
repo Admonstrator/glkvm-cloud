@@ -80,6 +80,33 @@ case "$1" in
     exec turnserver -c /tmp/turnserver.conf
     ;;
 
+  caddy)
+    : "${RTTYS_WEBUI_PORT:=443}"
+    : "${RTTYS_HTTP_PROXY_PORT:=10443}"
+
+    # Check if DOMAIN is set
+    if [ -z "${DOMAIN:-}" ]; then
+      echo "ERROR: DOMAIN environment variable is required for Caddy"
+      echo "Please set DOMAIN in your .env file"
+      exit 1
+    fi
+
+    # Check if ACME_EMAIL is set
+    if [ -z "${ACME_EMAIL:-}" ]; then
+      echo "WARNING: ACME_EMAIL not set. Let's Encrypt notifications will be disabled."
+      echo "It's recommended to set ACME_EMAIL in your .env file"
+    fi
+
+    mkdir -p /etc/caddy
+    render /tpl/Caddyfile.tmpl /etc/caddy/Caddyfile \
+      DOMAIN ACME_EMAIL RTTYS_WEBUI_PORT RTTYS_HTTP_PROXY_PORT
+
+    echo "Starting Caddy with automatic HTTPS for domain: ${DOMAIN}"
+    echo "ACME email: ${ACME_EMAIL:-not set}"
+    
+    exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    ;;
+
   *)
     exec "$@"
     ;;

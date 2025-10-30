@@ -1,0 +1,44 @@
+version: "2.0"
+
+# This override file adds Caddy reverse proxy with automatic HTTPS/TLS
+# To use it:  docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+# Or rename it to docker-compose.override.yml for automatic inclusion
+
+services:
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:latest}
+    container_name: glkvm_caddy
+    restart: always
+    ports:
+      # HTTP for ACME challenges and automatic redirect to HTTPS
+      - "80:80"
+      # HTTPS for secure access
+      - "443:443"
+      - "443:443/udp"  # HTTP/3 support
+    volumes:
+      - ./templates/Caddyfile.template:/tpl/Caddyfile.tmpl:ro
+      - ./scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_PORT:-443}
+      RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_PORT:-10443}
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+    command: ["caddy"]
+    depends_on:
+      - rttys
+
+  # When Caddy is used, rttys doesn't need to expose ports 443 and 10443
+  # Caddy will handle the HTTPS and proxy to rttys
+  rttys:
+    ports:
+      # Only expose device connection port
+      - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
