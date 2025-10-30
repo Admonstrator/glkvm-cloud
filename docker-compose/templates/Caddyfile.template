@@ -14,8 +14,6 @@
         # Preserve original host header
         header_up Host {host}
         header_up X-Real-IP {remote}
-        header_up X-Forwarded-For {remote}
-        header_up X-Forwarded-Proto {scheme}
         
         # WebSocket support for SSH/terminal
         header_up Connection {>Connection}
@@ -32,8 +30,6 @@
     reverse_proxy rttys:{{RTTYS_WEBUI_PORT}} {
         header_up Host {host}
         header_up X-Real-IP {remote}
-        header_up X-Forwarded-For {remote}
-        header_up X-Forwarded-Proto {scheme}
         
         header_up Connection {>Connection}
         header_up Upgrade {>Upgrade}
