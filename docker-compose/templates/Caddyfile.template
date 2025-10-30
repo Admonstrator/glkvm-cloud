@@ -1,0 +1,37 @@
+{
+    # Global options for automatic HTTPS
+    email {{ACME_EMAIL}}
+    # Uncomment the following line to use Let's Encrypt staging server for testing
+    # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# Main web interface
+{{DOMAIN}} {
+    # Automatic HTTPS via Let's Encrypt (HTTP-01 challenge)
+    
+    # Reverse proxy to rttys web UI
+    reverse_proxy rttys:{{RTTYS_WEBUI_PORT}} {
+        # Preserve original host header
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        
+        # WebSocket support for SSH/terminal
+        header_up Connection {>Connection}
+        header_up Upgrade {>Upgrade}
+    }
+}
+
+# Wildcard subdomain for device access (e.g., device1.example.com)
+*.{{DOMAIN}} {
+    # Automatic HTTPS via Let's Encrypt (requires DNS-01 challenge)
+    # Note: For wildcard certificates, you need to configure DNS provider
+    # See: https://caddyserver.com/docs/automatic-https#dns-challenge
+    
+    reverse_proxy rttys:{{RTTYS_WEBUI_PORT}} {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        
+        header_up Connection {>Connection}
+        header_up Upgrade {>Upgrade}
+    }
+}
