@@ -96,7 +96,7 @@ else
 fi
 
 # Navigate to docker-compose directory
-cd "${INSTALL_DIR}"
+cd "${INSTALL_DIR}" || exit 1
 if [ -d "docker-compose" ]; then
     cd docker-compose
 fi
