@@ -77,9 +77,7 @@
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
 
-### 🌐 平台访问
-
-### 使用 Caddy 自动 HTTPS（推荐用于生产环境）
+#### 使用 Caddy 自动 HTTPS（推荐用于生产环境）
 
 GLKVM 轻量云现在支持使用 Caddy 实现自动 HTTPS/TLS 证书管理。
 
@@ -112,6 +110,7 @@ GLKVM 轻量云现在支持使用 Caddy 实现自动 HTTPS/TLS 证书管理。
 
 详细配置说明请参考：[docker-compose/README.md](docker-compose/README.md) 或 [English Documentation](README.md)
 
+### 🌐 平台访问
 
 安装完成后，你可以通过以下方式访问平台：
 
