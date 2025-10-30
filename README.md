@@ -46,6 +46,8 @@ The following mainstream operating systems have been tested and verified
 
 If your server provider uses a **cloud security group** (e.g., AWS, Aliyun, etc.), please make sure the following ports are **open**:
 
+**Basic Setup (Self-signed certificates):**
+
 | Port  | Protocol | Purpose                        |
 | ----- | -------- | ------------------------------ |
 | 443   | TCP      | Web UI access                  |
@@ -53,8 +55,18 @@ If your server provider uses a **cloud security group** (e.g., AWS, Aliyun, etc.
 | 5912  | TCP      | Device connection              |
 | 3478  | TCP/UDP  | TURN server for WebRTC support |
 
+**With Caddy (Automatic HTTPS):**
+
+| Port  | Protocol | Purpose                             |
+| ----- | -------- | ----------------------------------- |
+| 80    | TCP      | HTTP (auto-redirect to HTTPS)       |
+| 443   | TCP/UDP  | HTTPS/HTTP3 for Web UI via Caddy    |
+| 5912  | TCP      | Device connection                   |
+| 3478  | TCP/UDP  | TURN server for WebRTC support      |
+
 ⚠️ **Important:**
- These ports will be **used by GLKVM Cloud**. Please ensure **no other applications or services** on your server are binding to these ports, otherwise the lightweight cloud platform may fail to start properly.
+- These ports will be **used by GLKVM Cloud**. Please ensure **no other applications or services** on your server are binding to these ports, otherwise the lightweight cloud platform may fail to start properly.
+- When using Caddy, port **80 is required** for Let's Encrypt HTTP-01 challenge validation.
 
 ------
 ### 📦 Installation
@@ -280,3 +292,40 @@ Once everything is configured, you can access the platform via your domain:
 ```
 https://www.your-domain.com
 ```
+## Troubleshooting
+
+### Caddy Configuration Issues
+
+**Certificates not being issued:**
+1. Verify your domain DNS points to your server's public IP
+2. Ensure ports 80 and 443 are accessible from the internet
+3. Check Caddy logs: `docker logs glkvm_caddy`
+4. Verify DOMAIN and ACME_EMAIL are correctly set in `.env`
+
+**"Error binding to port":**
+- Another service is using ports 80 or 443
+- Stop the conflicting service or use the basic setup (without Caddy)
+
+**Access denied or connection refused:**
+- Check if all containers are running: `docker ps`
+- Verify firewall rules allow the required ports
+- Check container logs: `docker logs glkvm_cloud`
+
+### General Issues
+
+**Can't access the web interface:**
+1. Verify the service is running: `docker ps | grep glkvm`
+2. Check if ports are properly exposed: `docker port glkvm_cloud`
+3. Review logs: `docker logs glkvm_cloud`
+
+**Device connection fails:**
+- Ensure port 5912 is open and accessible
+- Verify RTTYS_TOKEN matches between server and device
+- Check device logs for connection errors
+
+**WebRTC/video issues:**
+- Verify TURN server (coturn) is running: `docker ps | grep coturn`
+- Ensure port 3478 (TCP/UDP) is open
+- Check coturn logs: `docker logs glkvm_coturn`
+
+For more help, visit: https://github.com/gl-inet/glkvm-cloud/issues
