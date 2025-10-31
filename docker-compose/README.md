@@ -106,6 +106,27 @@ When enabled, Caddy will:
 - Serve as a reverse proxy to the rttys container
 - Support HTTP/3 (QUIC) for better performance
 
+**Port Configuration:**
+
+When Caddy is enabled, the port mapping changes as follows:
+
+- **External (exposed to internet):**
+  - Port 80 (HTTP) → Caddy handles ACME challenges and redirects to HTTPS
+  - Port 443 (HTTPS) → Caddy reverse proxy to rttys Web UI
+  - Port 10443 (HTTPS) → Caddy reverse proxy to rttys HTTP Proxy
+  - Port 5912 (TCP) → Direct connection to rttys for device connections
+
+- **Internal (within Docker network only):**
+  - rttys Web UI runs on port 8443 (not exposed externally)
+  - rttys HTTP Proxy runs on port 18443 (not exposed externally)
+  - Caddy proxies external requests to these internal ports
+
+This architecture ensures that:
+1. All web traffic goes through Caddy for proper SSL/TLS termination
+2. rttys doesn't need to manage SSL certificates
+3. No port conflicts between Caddy and rttys
+4. Device connections (port 5912) bypass Caddy for optimal performance
+
 ### Wildcard Certificates (Optional)
 
 If you need wildcard certificates (e.g., `*.example.com`) for device-specific subdomains:

@@ -61,6 +61,7 @@ If your server provider uses a **cloud security group** (e.g., AWS, Aliyun, etc.
 | ----- | -------- | ----------------------------------- |
 | 80    | TCP      | HTTP (auto-redirect to HTTPS)       |
 | 443   | TCP/UDP  | HTTPS/HTTP3 for Web UI via Caddy    |
+| 10443 | TCP      | HTTPS for HTTP Proxy via Caddy      |
 | 5912  | TCP      | Device connection                   |
 | 3478  | TCP/UDP  | TURN server for WebRTC support      |
 
