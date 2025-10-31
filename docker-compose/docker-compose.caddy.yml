@@ -1,5 +1,3 @@
-version: "2.0"
-
 # This override file adds Caddy reverse proxy with automatic HTTPS/TLS
 # To use it:  docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
 # Or rename it to docker-compose.override.yml for automatic inclusion
@@ -39,24 +37,24 @@ services:
       # Override ports to use internal ports when behind Caddy
       RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
       RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
-    # Override volumes to exclude SSL certificates
-    # When using Caddy, rttys should run in HTTP mode (no SSL)
-    # Caddy terminates TLS and proxies to rttys over HTTP
-    # Note: The !override tag is a Docker Compose merge control that completely replaces
-    # the entire volumes array from the base docker-compose.yml (not just specific entries).
-    # We only keep the template and entrypoint volumes needed for configuration.
-    # The SSL certificate volumes from the base docker-compose.yml are intentionally excluded.
+    # Override volumes to include sample certificates for auto-generation
+    # When using Caddy, rttys uses auto-generated certs in a named volume
+    # Caddy terminates TLS externally, so these are only for rttys internal use
+    # Use !override to replace the entire volumes array from docker-compose.yml
     volumes: !override
       - ./templates/rttys.conf.template:/tpl/rttys.conf.tmpl:ro
       - ./scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
-    # Use !override to replace the entire ports section from base docker-compose.yml
-    # This prevents Docker Compose from merging arrays and ensures only port 5912 is exposed
+      - ./templates/sample_cert.pem:/tpl/sample_cert.pem:ro
+      - ./templates/sample_key.pem:/tpl/sample_key.pem:ro
+      - rttys_certs:/home/certificate
+    # Use !override to replace the entire ports array from docker-compose.yml
+    # Only expose device connection port; Caddy handles web UI and HTTP proxy ports
     ports: !override
-      # Only expose device connection port - do not expose web UI or HTTP proxy ports
-      # as Caddy will handle those
       - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
 
 volumes:
+  rttys_certs:
+    driver: local
   caddy_data:
     driver: local
   caddy_config:
