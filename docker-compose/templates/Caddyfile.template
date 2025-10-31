@@ -13,21 +13,28 @@
     # WebSocket support for SSH/terminal and HTTP proxying
     header_up Connection {>Connection}
     header_up Upgrade {>Upgrade}
+    
+    # Accept self-signed certificates from rttys (internal TLS)
+    transport http {
+        tls_insecure_skip_verify
+    }
 }
 
 # Main web interface
 {{DOMAIN}} {
     # Automatic HTTPS via Let's Encrypt (HTTP-01 challenge)
-    # Caddy terminates TLS and communicates with rttys over HTTP (no SSL)
-    reverse_proxy http://rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
+    # Caddy terminates external TLS and communicates with rttys over internal HTTPS
+    # Self-signed certificates are accepted for internal communication
+    reverse_proxy https://rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
         import proxy_settings
     }
 }
 
 # HTTP proxy endpoint on port 10443
 {{DOMAIN}}:10443 {
-    # Proxy to rttys HTTP proxy port (no SSL between Caddy and rttys)
-    reverse_proxy http://rttys:{{RTTYS_HTTP_PROXY_INTERNAL_PORT}} {
+    # Proxy to rttys HTTP proxy port with internal HTTPS
+    # Self-signed certificates are accepted for internal communication
+    reverse_proxy https://rttys:{{RTTYS_HTTP_PROXY_INTERNAL_PORT}} {
         import proxy_settings
     }
 }
@@ -38,8 +45,9 @@
     # Note: For wildcard certificates, you need to configure DNS provider
     # See: https://caddyserver.com/docs/automatic-https#dns-challenge
     
-    # Caddy terminates TLS and communicates with rttys over HTTP (no SSL)
-    reverse_proxy http://rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
+    # Caddy terminates external TLS and communicates with rttys over internal HTTPS
+    # Self-signed certificates are accepted for internal communication
+    reverse_proxy https://rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
         import proxy_settings
     }
 }
