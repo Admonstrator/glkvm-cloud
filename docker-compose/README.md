@@ -168,17 +168,19 @@ When enabled, Caddy will:
 
 **Important: Backend Communication**
 
-🔒 **Caddy terminates TLS and communicates with rttys over HTTP (not HTTPS)** for optimal performance:
-- External clients connect to Caddy via HTTPS (secure)
-- Caddy proxies requests to rttys via HTTP within the Docker network
-- No SSL/TLS overhead between Caddy and rttys
+🔒 **Caddy terminates external TLS and communicates with rttys over internal HTTPS** for both security and performance:
+- External clients connect to Caddy via HTTPS with Let's Encrypt certificates (secure)
+- Caddy proxies requests to rttys via HTTPS within the Docker network using self-signed certificates
+- Internal TLS provides encryption within the Docker network
 - All containers communicate over Docker's internal network (isolated from external access)
 
 This architecture is secure because:
 1. Docker network is isolated and not accessible from outside
-2. All external traffic is encrypted via Caddy's TLS
-3. Internal HTTP communication is fast and reduces CPU overhead
-4. This is the standard practice for reverse proxy deployments
+2. All external traffic is encrypted via Caddy's Let's Encrypt TLS certificates
+3. Internal traffic between Caddy and rttys is also encrypted using HTTPS with self-signed certificates
+4. Caddy is configured to accept self-signed certificates from rttys (tls_insecure_skip_verify)
+   - ⚠️ Note: `tls_insecure_skip_verify` is safe here because Caddy and rttys communicate within an isolated Docker network that is not accessible from outside. This setting would NOT be appropriate for external connections.
+5. This provides defense-in-depth with encryption at both external and internal boundaries
 
 **Port Configuration:**
 
@@ -186,21 +188,21 @@ When Caddy is enabled, the port mapping changes as follows:
 
 - **External (exposed to internet):**
   - Port 80 (HTTP) → Caddy handles ACME challenges and redirects to HTTPS
-  - Port 443 (HTTPS) → Caddy reverse proxy to rttys Web UI (backend: HTTP)
-  - Port 10443 (HTTPS) → Caddy reverse proxy to rttys HTTP Proxy (backend: HTTP)
+  - Port 443 (HTTPS) → Caddy reverse proxy to rttys Web UI (backend: HTTPS with self-signed cert)
+  - Port 10443 (HTTPS) → Caddy reverse proxy to rttys HTTP Proxy (backend: HTTPS with self-signed cert)
   - Port 5912 (TCP) → Direct connection to rttys for device connections
 
 - **Internal (within Docker network only):**
-  - rttys Web UI runs on port 8443 in HTTP mode (not exposed externally)
-  - rttys HTTP Proxy runs on port 18443 in HTTP mode (not exposed externally)
-  - Caddy proxies external HTTPS requests to these internal HTTP ports
+  - rttys Web UI runs on port 8443 in HTTPS mode with self-signed certificates (not exposed externally)
+  - rttys HTTP Proxy runs on port 18443 in HTTPS mode with self-signed certificates (not exposed externally)
+  - Caddy proxies external HTTPS requests to these internal HTTPS ports
 
 This architecture ensures that:
-1. All web traffic goes through Caddy for proper SSL/TLS termination
-2. rttys doesn't need to manage SSL certificates when behind Caddy
+1. All web traffic goes through Caddy for proper SSL/TLS termination with trusted certificates
+2. Internal traffic between containers is encrypted for additional security
 3. No port conflicts between Caddy and rttys
 4. Device connections (port 5912) bypass Caddy for optimal performance
-5. **No SSL between Caddy and rttys** - HTTP is used for internal communication
+5. **Internal TLS between Caddy and rttys** - HTTPS with self-signed certificates is used for internal communication
 
 ### Wildcard Certificates (Optional)
 
