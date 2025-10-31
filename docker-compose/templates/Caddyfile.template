@@ -18,15 +18,16 @@
 # Main web interface
 {{DOMAIN}} {
     # Automatic HTTPS via Let's Encrypt (HTTP-01 challenge)
-    reverse_proxy rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
+    # Caddy terminates TLS and communicates with rttys over HTTP (no SSL)
+    reverse_proxy http://rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
         import proxy_settings
     }
 }
 
 # HTTP proxy endpoint on port 10443
 {{DOMAIN}}:10443 {
-    # Proxy to rttys HTTP proxy port
-    reverse_proxy rttys:{{RTTYS_HTTP_PROXY_INTERNAL_PORT}} {
+    # Proxy to rttys HTTP proxy port (no SSL between Caddy and rttys)
+    reverse_proxy http://rttys:{{RTTYS_HTTP_PROXY_INTERNAL_PORT}} {
         import proxy_settings
     }
 }
@@ -37,7 +38,8 @@
     # Note: For wildcard certificates, you need to configure DNS provider
     # See: https://caddyserver.com/docs/automatic-https#dns-challenge
     
-    reverse_proxy rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
+    # Caddy terminates TLS and communicates with rttys over HTTP (no SSL)
+    reverse_proxy http://rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
         import proxy_settings
     }
 }
