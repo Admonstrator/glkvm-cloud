@@ -1,6 +1,6 @@
 services:
   rttys:
-    image: glzhitong/glkvm-cloud:latest
+    image: ${GLKVM_IMAGE:-glzhitong/glkvm-cloud:latest}
     container_name: glkvm_cloud
     restart: always
     environment:
@@ -45,7 +45,7 @@ services:
       - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
 
   coturn:
-    image: coturn/coturn:edge-alpine
+    image: ${COTURN_IMAGE:-coturn/coturn:edge-alpine}
     container_name: glkvm_coturn
     restart: always
     environment:
