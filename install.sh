@@ -95,7 +95,8 @@ fi
 check_port() {
     local port=$1
     local service=$2
-    if ss -tuln 2>/dev/null | grep -q ":${port} " || netstat -tuln 2>/dev/null | grep -q ":${port} "; then
+    # Use more specific regex to avoid matching ports that contain the target port as a substring
+    if ss -tuln 2>/dev/null | grep -E ":${port}\s|:${port}$" || netstat -tuln 2>/dev/null | grep -E ":${port}\s|:${port}$"; then
         warning "Port ${port} (${service}) is already in use. This may cause conflicts."
         return 1
     fi
@@ -145,8 +146,7 @@ else
         success "Git installed successfully"
     fi
     
-    git clone https://github.com/Admonstrator/glkvm-cloud.git "${INSTALL_DIR}"
-    if [ $? -ne 0 ]; then
+    if ! git clone https://github.com/Admonstrator/glkvm-cloud.git "${INSTALL_DIR}"; then
         error "Failed to clone repository. Please check your internet connection."
         exit 1
     fi
@@ -351,9 +351,9 @@ if [ "$USE_CADDY" = true ]; then
     info "Verifying Caddy can communicate with GLKVM Cloud..."
     sleep 3
     CADDY_LOGS=$(docker logs glkvm_caddy 2>&1 | tail -20)
-    if echo "$CADDY_LOGS" | grep -qi "error\|failed\|refused"; then
+    if echo "$CADDY_LOGS" | grep -iE "error:|failed to|connection refused"; then
         warning "Detected potential connection issues in Caddy logs:"
-        echo "$CADDY_LOGS" | grep -i "error\|failed\|refused"
+        echo "$CADDY_LOGS" | grep -iE "error:|failed to|connection refused"
         warning "Please check: docker logs glkvm_caddy"
     else
         success "Caddy is communicating with GLKVM Cloud successfully"
@@ -362,7 +362,7 @@ fi
 
 # Check container logs for any startup errors
 info "Checking for startup errors..."
-RTTYS_ERRORS=$(docker logs glkvm_cloud 2>&1 | grep -i "error\|fatal" | tail -5)
+RTTYS_ERRORS=$(docker logs glkvm_cloud 2>&1 | grep -iE "error:|fatal:|failed to" | tail -5)
 if [ -n "$RTTYS_ERRORS" ]; then
     warning "Detected errors in GLKVM Cloud logs:"
     echo "$RTTYS_ERRORS"
