@@ -67,8 +67,26 @@ For production deployments with a custom domain, you can enable Caddy to automat
 
 ### Configuration
 
-1. **Edit `.env` file and configure domain settings:**
+#### Method 1: Using docker-compose.override.yml (Recommended)
 
+This is the simplest method as Docker Compose automatically applies override files.
+
+1. **Copy the override file template:**
+
+   ```bash
+   cd /path/to/glkvm-cloud
+   cp docker-compose.override.yml.example docker-compose.override.yml
+   ```
+
+2. **Edit `docker-compose/.env` and configure domain settings:**
+
+   ```bash
+   cd docker-compose
+   cp .env.example .env
+   nano .env  # or use your preferred editor
+   ```
+
+   Set the following variables:
    ```bash
    # Set your domain name
    DOMAIN=kvm.example.com
@@ -77,17 +95,24 @@ For production deployments with a custom domain, you can enable Caddy to automat
    ACME_EMAIL=admin@example.com
    ```
 
-2. **Start services with Caddy enabled:**
+3. **Start services:**
 
    ```bash
-   docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+   docker compose up -d
    ```
 
-   Or for subsequent restarts:
+   Docker Compose will automatically use `docker-compose.override.yml` to enable Caddy and configure rttys appropriately.
+
+#### Method 2: Using Docker Compose Profiles
+
+This method doesn't require an override file but requires specifying the profile each time.
+
+1. **Edit `docker-compose/.env` and configure domain settings** (same as Method 1 step 2)
+
+2. **Start services with Caddy profile:**
 
    ```bash
-   docker-compose -f docker-compose.yml -f docker-compose.caddy.yml down
-   docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+   docker compose --profile caddy up -d
    ```
 
 3. **Access your platform via domain:**
@@ -103,7 +128,7 @@ When enabled, Caddy will:
 - Automatically obtain SSL/TLS certificates from Let's Encrypt
 - Handle HTTP to HTTPS redirects
 - Manage certificate renewals automatically (before expiration)
-- Serve as a reverse proxy to the rttys container
+- Serve as a reverse proxy to the rttys container with TLS termination
 - Support HTTP/3 (QUIC) for better performance
 
 **Port Configuration:**
@@ -117,13 +142,13 @@ When Caddy is enabled, the port mapping changes as follows:
   - Port 5912 (TCP) → Direct connection to rttys for device connections
 
 - **Internal (within Docker network only):**
-  - rttys Web UI runs on port 8443 (not exposed externally)
-  - rttys HTTP Proxy runs on port 18443 (not exposed externally)
-  - Caddy proxies external requests to these internal ports
+  - rttys Web UI runs on port 8443 in HTTP mode (not exposed externally)
+  - rttys HTTP Proxy runs on port 18443 in HTTP mode (not exposed externally)
+  - Caddy proxies external HTTPS requests to these internal HTTP ports
 
 This architecture ensures that:
 1. All web traffic goes through Caddy for proper SSL/TLS termination
-2. rttys doesn't need to manage SSL certificates
+2. rttys doesn't need to manage SSL certificates when behind Caddy
 3. No port conflicts between Caddy and rttys
 4. Device connections (port 5912) bypass Caddy for optimal performance
 
@@ -140,16 +165,34 @@ If you need wildcard certificates (e.g., `*.example.com`) for device-specific su
 
 **To disable Caddy and use self-signed certificates:**
 
+Method 1 users:
 ```bash
-docker-compose -f docker-compose.yml down
-docker-compose up -d
+# Remove or rename the override file
+mv docker-compose.override.yml docker-compose.override.yml.disabled
+docker compose down
+docker compose up -d
+```
+
+Method 2 users:
+```bash
+docker compose down
+docker compose up -d
 ```
 
 **To re-enable Caddy:**
 
+Method 1 users:
 ```bash
-docker-compose down
-docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+# Restore the override file
+mv docker-compose.override.yml.disabled docker-compose.override.yml
+docker compose down
+docker compose up -d
+```
+
+Method 2 users:
+```bash
+docker compose down
+docker compose --profile caddy up -d
 ```
 
 ### Troubleshooting
