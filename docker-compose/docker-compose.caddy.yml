@@ -39,8 +39,9 @@ services:
       # Override ports to use internal ports when behind Caddy
       RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
       RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
-    ports:
-      # Only expose device connection port
+    ports: !override
+      # Only expose device connection port - do not expose web UI or HTTP proxy ports
+      # as Caddy will handle those
       - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
 
 volumes:
