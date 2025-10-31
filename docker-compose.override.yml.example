@@ -1,0 +1,32 @@
+# Docker Compose override file for Caddy setup
+# This file demonstrates how to enable Caddy with the consolidated docker-compose.yml
+# 
+# To use this configuration:
+# 1. Copy this file: cp docker-compose.override.yml.example docker-compose.override.yml
+# 2. Edit your .env file and set DOMAIN and ACME_EMAIL
+# 3. Run: docker compose up -d
+#
+# Docker Compose automatically applies docker-compose.override.yml if it exists
+# This file configures rttys to use internal ports when Caddy is handling TLS
+
+services:
+  rttys:
+    environment:
+      # Override ports to use internal ports when behind Caddy
+      RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
+      RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
+    # Override certificate volumes to point to non-existent paths
+    # This ensures rttys runs in HTTP mode when Caddy handles TLS
+    volumes:
+      - ./docker-compose/templates/rttys.conf.template:/tpl/rttys.conf.tmpl:ro
+      - ./docker-compose/scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - /dev/null:/home/certificate/glkvm_cer:ro
+      - /dev/null:/home/certificate/glkvm_key:ro
+    ports:
+      # Only expose device connection port
+      # Caddy will handle web UI (443) and HTTP proxy (10443) ports
+      - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
+
+  # Enable Caddy service (override profile to make it always active)
+  caddy:
+    profiles: []

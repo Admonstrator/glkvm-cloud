@@ -16,6 +16,11 @@ services:
       # Override ports to use internal ports when behind Caddy
       RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
       RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
+    # Override volumes to exclude SSL certificates when using Caddy
+    # Caddy handles TLS termination, so rttys should run in HTTP mode
+    volumes:
+      - ./docker-compose/templates/rttys.conf.template:/tpl/rttys.conf.tmpl:ro
+      - ./docker-compose/scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     ports:
       # Only expose device connection port
       # Caddy will handle web UI (443) and HTTP proxy (10443) ports

@@ -93,8 +93,14 @@ func (cfg *Config) Parse(c *cli.Command) error {
 	getFlagOpt(c, "allow-origins", &cfg.AllowOrigins)
 	getFlagOpt(c, "pprof", &cfg.PprofAddr)
 
-	cfg.SslCert = SslCert
-	cfg.SslKey = SslKey
+	// Only set SSL certificate paths if the files exist and are valid
+	// This allows running in HTTP mode when behind a reverse proxy (e.g., Caddy)
+	if certInfo, err := os.Stat(SslCert); err == nil && certInfo.Mode().IsRegular() && certInfo.Size() > 0 {
+		if keyInfo, err := os.Stat(SslKey); err == nil && keyInfo.Mode().IsRegular() && keyInfo.Size() > 0 {
+			cfg.SslCert = SslCert
+			cfg.SslKey = SslKey
+		}
+	}
 
 	getFlagOpt(c, "webrtc-ip", &cfg.WebrtcIP)
 	getFlagOpt(c, "webrtc-port", &cfg.WebrtcPort)
