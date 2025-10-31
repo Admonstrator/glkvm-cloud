@@ -5,7 +5,7 @@
 1. **Clone the repository and prepare the environment template**
 
    ```bash
-   git clone https://github.com/gl-inet/glkvm-cloud.git
+   git clone https://github.com/Admonstrator/glkvm-cloud.git
    cd glkvm-cloud/docker-compose/
    cp .env.example .env
    ```

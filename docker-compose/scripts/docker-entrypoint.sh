@@ -81,8 +81,8 @@ case "$1" in
     ;;
 
   caddy)
-    : "${RTTYS_WEBUI_PORT:=443}"
-    : "${RTTYS_HTTP_PROXY_PORT:=10443}"
+    : "${RTTYS_WEBUI_INTERNAL_PORT:=8443}"
+    : "${RTTYS_HTTP_PROXY_INTERNAL_PORT:=18443}"
 
     # Check if DOMAIN is set
     if [ -z "${DOMAIN:-}" ]; then
@@ -99,10 +99,12 @@ case "$1" in
 
     mkdir -p /etc/caddy
     render /tpl/Caddyfile.tmpl /etc/caddy/Caddyfile \
-      DOMAIN ACME_EMAIL RTTYS_WEBUI_PORT RTTYS_HTTP_PROXY_PORT
+      DOMAIN ACME_EMAIL RTTYS_WEBUI_INTERNAL_PORT RTTYS_HTTP_PROXY_INTERNAL_PORT
 
     echo "Starting Caddy with automatic HTTPS for domain: ${DOMAIN}"
     echo "ACME email: ${ACME_EMAIL:-not set}"
+    echo "Proxying Web UI from rttys:${RTTYS_WEBUI_INTERNAL_PORT}"
+    echo "Proxying HTTP Proxy from rttys:${RTTYS_HTTP_PROXY_INTERNAL_PORT}"
     
     exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     ;;

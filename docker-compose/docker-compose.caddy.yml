@@ -15,6 +15,8 @@ services:
       # HTTPS for secure access
       - "443:443"
       - "443:443/udp"  # HTTP/3 support
+      # HTTP Proxy port (proxied by Caddy with TLS)
+      - "10443:10443"
     volumes:
       - ./templates/Caddyfile.template:/tpl/Caddyfile.tmpl:ro
       - ./scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
@@ -23,16 +25,20 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
-      RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_PORT:-443}
-      RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_PORT:-10443}
+      RTTYS_WEBUI_INTERNAL_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
+      RTTYS_HTTP_PROXY_INTERNAL_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
     entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
     command: ["caddy"]
     depends_on:
       - rttys
 
-  # When Caddy is used, rttys doesn't need to expose ports 443 and 10443
-  # Caddy will handle the HTTPS and proxy to rttys
+  # When Caddy is used, rttys uses internal ports that Caddy will proxy to
+  # Caddy will handle the HTTPS and proxy to rttys internal ports
   rttys:
+    environment:
+      # Override ports to use internal ports when behind Caddy
+      RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
+      RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
     ports:
       # Only expose device connection port
       - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
