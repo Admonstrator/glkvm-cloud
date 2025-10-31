@@ -39,6 +39,12 @@ services:
       # Override ports to use internal ports when behind Caddy
       RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
       RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
+    # Override volumes to exclude SSL certificates
+    # When using Caddy, rttys should run in HTTP mode (no SSL)
+    # Caddy terminates TLS and proxies to rttys over HTTP
+    volumes: !override
+      - ./templates/rttys.conf.template:/tpl/rttys.conf.tmpl:ro
+      - ./scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     # Use !override to replace the entire ports section from base docker-compose.yml
     # This prevents Docker Compose from merging arrays and ensures only port 5912 is exposed
     ports: !override
