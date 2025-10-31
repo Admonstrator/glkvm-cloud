@@ -74,32 +74,95 @@ else
     success "Docker Compose (CLI plugin) is already installed"
 fi
 
-# Create installation directory
-INSTALL_DIR="${HOME}/glkvm_cloud"
-info "Creating installation directory at ${INSTALL_DIR}..."
-mkdir -p "${INSTALL_DIR}"
-cd "${INSTALL_DIR}"
+# Check if required commands are available
+info "Checking required tools..."
+if ! command -v openssl &> /dev/null; then
+    warning "openssl not found. Installing openssl..."
+    if command -v apt-get &> /dev/null; then
+        apt-get update && apt-get install -y openssl
+    elif command -v yum &> /dev/null; then
+        yum install -y openssl
+    elif command -v dnf &> /dev/null; then
+        dnf install -y openssl
+    else
+        error "Cannot install openssl. Please install it manually."
+        exit 1
+    fi
+    success "openssl installed successfully"
+fi
 
-# Clone or update repository
-if [ -d "${INSTALL_DIR}/.git" ]; then
-    info "Updating existing installation..."
-    git pull
-else
-    info "Cloning GLKVM Cloud repository..."
-    # Use the appropriate method to get the files
-    # For now, we'll assume the files are already in the docker-compose directory
-    if [ ! -f "docker-compose.yml" ]; then
-        error "Installation files not found. Please clone the repository manually:"
-        echo "  git clone https://github.com/gl-inet/glkvm-cloud.git"
+# Function to check if a port is in use
+check_port() {
+    local port=$1
+    local service=$2
+    # Use more specific regex to avoid matching ports that contain the target port as a substring
+    if ss -tuln 2>/dev/null | grep -E ":${port}\s|:${port}$" || netstat -tuln 2>/dev/null | grep -E ":${port}\s|:${port}$"; then
+        warning "Port ${port} (${service}) is already in use. This may cause conflicts."
+        return 1
+    fi
+    return 0
+}
+
+# Check critical ports
+info "Checking if required ports are available..."
+PORTS_OK=true
+check_port 5912 "Device connection" || PORTS_OK=false
+check_port 3478 "TURN server" || PORTS_OK=false
+
+if [ "$PORTS_OK" = false ]; then
+    echo ""
+    warning "Some required ports are already in use."
+    read -p "Do you want to continue anyway? (y/N): " continue_anyway
+    if [[ ! "$continue_anyway" =~ ^[Yy]$ ]]; then
+        error "Installation aborted. Please free up the required ports and try again."
         exit 1
     fi
 fi
 
-# Navigate to docker-compose directory
-cd "${INSTALL_DIR}" || exit 1
-if [ -d "docker-compose" ]; then
-    cd docker-compose
+# Create installation directory
+INSTALL_DIR="${HOME}/glkvm_cloud"
+info "Creating installation directory at ${INSTALL_DIR}..."
+mkdir -p "${INSTALL_DIR}"
+
+# Clone or update repository
+if [ -d "${INSTALL_DIR}/.git" ]; then
+    info "Updating existing installation..."
+    cd "${INSTALL_DIR}"
+    git pull
+else
+    info "Cloning GLKVM Cloud repository..."
+    if ! command -v git &> /dev/null; then
+        warning "Git not found. Installing Git..."
+        if command -v apt-get &> /dev/null; then
+            apt-get update && apt-get install -y git
+        elif command -v yum &> /dev/null; then
+            yum install -y git
+        elif command -v dnf &> /dev/null; then
+            dnf install -y git
+        else
+            error "Cannot install git. Please install git manually and run the script again."
+            exit 1
+        fi
+        success "Git installed successfully"
+    fi
+    
+    if ! git clone https://github.com/Admonstrator/glkvm-cloud.git "${INSTALL_DIR}"; then
+        error "Failed to clone repository. Please check your internet connection."
+        exit 1
+    fi
+    success "Repository cloned successfully"
 fi
+
+# Navigate to installation directory
+cd "${INSTALL_DIR}" || exit 1
+
+# Check if docker-compose directory exists
+if [ ! -d "docker-compose" ]; then
+    error "docker-compose directory not found in ${INSTALL_DIR}"
+    exit 1
+fi
+
+cd docker-compose
 
 # Check if .env file exists
 if [ -f ".env" ]; then
@@ -135,6 +198,28 @@ ACME_EMAIL=""
 
 if [[ "$use_caddy" =~ ^[Yy]$ ]]; then
     USE_CADDY=true
+    
+    # Check Caddy-specific ports early
+    info "Checking Caddy-specific ports..."
+    CADDY_PORTS_OK=true
+    check_port 80 "HTTP (Caddy)" || CADDY_PORTS_OK=false
+    check_port 443 "HTTPS (Caddy)" || CADDY_PORTS_OK=false
+    check_port 10443 "HTTP Proxy (Caddy)" || CADDY_PORTS_OK=false
+    
+    if [ "$CADDY_PORTS_OK" = false ]; then
+        error "Required Caddy ports (80, 443, 10443) are in use. Cannot continue with Caddy setup."
+        read -p "Do you want to continue WITHOUT Caddy (self-signed certificates)? (y/N): " use_no_caddy
+        if [[ "$use_no_caddy" =~ ^[Yy]$ ]]; then
+            USE_CADDY=false
+            warning "Continuing without Caddy. Self-signed certificates will be used."
+        else
+            error "Installation aborted. Please free up ports 80, 443, and 10443 or choose not to use Caddy."
+            exit 1
+        fi
+    fi
+fi
+
+if [ "$USE_CADDY" = true ]; then
     echo ""
     info "Great! Let's configure automatic HTTPS with Caddy."
     echo ""
@@ -228,6 +313,62 @@ else
         docker-compose up -d
     fi
     success "GLKVM Cloud started with self-signed certificates"
+fi
+
+# Wait for containers to be healthy
+echo ""
+info "Checking container health (this may take a moment)..."
+sleep 5
+
+# Check if containers are running
+RTTYS_RUNNING=$(docker ps --filter "name=glkvm_cloud" --filter "status=running" --format "{{.Names}}")
+COTURN_RUNNING=$(docker ps --filter "name=glkvm_coturn" --filter "status=running" --format "{{.Names}}")
+
+if [ -z "$RTTYS_RUNNING" ]; then
+    error "GLKVM Cloud container (glkvm_cloud) is not running!"
+    echo "Check logs with: docker logs glkvm_cloud"
+    exit 1
+fi
+success "GLKVM Cloud container is running"
+
+if [ -z "$COTURN_RUNNING" ]; then
+    warning "TURN server container (glkvm_coturn) is not running"
+    warning "WebRTC functionality may not work properly"
+else
+    success "TURN server container is running"
+fi
+
+if [ "$USE_CADDY" = true ]; then
+    CADDY_RUNNING=$(docker ps --filter "name=glkvm_caddy" --filter "status=running" --format "{{.Names}}")
+    if [ -z "$CADDY_RUNNING" ]; then
+        error "Caddy container (glkvm_caddy) is not running!"
+        echo "Check logs with: docker logs glkvm_caddy"
+        exit 1
+    fi
+    success "Caddy container is running"
+    
+    # Check if Caddy can reach rttys
+    info "Verifying Caddy can communicate with GLKVM Cloud..."
+    sleep 3
+    CADDY_LOGS=$(docker logs glkvm_caddy 2>&1 | tail -20)
+    if echo "$CADDY_LOGS" | grep -iE "error:|failed to|connection refused"; then
+        warning "Detected potential connection issues in Caddy logs:"
+        echo "$CADDY_LOGS" | grep -iE "error:|failed to|connection refused"
+        warning "Please check: docker logs glkvm_caddy"
+    else
+        success "Caddy is communicating with GLKVM Cloud successfully"
+    fi
+fi
+
+# Check container logs for any startup errors
+info "Checking for startup errors..."
+RTTYS_ERRORS=$(docker logs glkvm_cloud 2>&1 | grep -iE "error:|fatal:|failed to" | tail -5)
+if [ -n "$RTTYS_ERRORS" ]; then
+    warning "Detected errors in GLKVM Cloud logs:"
+    echo "$RTTYS_ERRORS"
+    warning "Check full logs with: docker logs glkvm_cloud"
+else
+    success "No critical errors detected in logs"
 fi
 
 echo ""
