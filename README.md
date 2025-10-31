@@ -61,6 +61,7 @@ If your server provider uses a **cloud security group** (e.g., AWS, Aliyun, etc.
 | ----- | -------- | ----------------------------------- |
 | 80    | TCP      | HTTP (auto-redirect to HTTPS)       |
 | 443   | TCP/UDP  | HTTPS/HTTP3 for Web UI via Caddy    |
+| 10443 | TCP      | HTTPS for HTTP Proxy via Caddy      |
 | 5912  | TCP      | Device connection                   |
 | 3478  | TCP/UDP  | TURN server for WebRTC support      |
 
@@ -85,11 +86,11 @@ Run **as root**:
 
 #### B) Docker manual install
 
-> Full reference: see [`docker-compose/README.md`](https://github.com/gl-inet/glkvm-cloud/blob/main/docker-compose/README.md)
+> Full reference: see [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)
 
 **Basic Installation (Self-signed Certificate):**
 ```bash
-git clone https://github.com/gl-inet/glkvm-cloud.git
+git clone https://github.com/Admonstrator/glkvm-cloud.git
 cd glkvm-cloud/docker-compose/
 cp .env.example .env
 # Edit .env to customize settings
@@ -101,7 +102,7 @@ docker-compose up -d
 For production deployments with automatic Let's Encrypt SSL certificates:
 
 ```bash
-git clone https://github.com/gl-inet/glkvm-cloud.git
+git clone https://github.com/Admonstrator/glkvm-cloud.git
 cd glkvm-cloud/docker-compose/
 cp .env.example .env
 # Edit .env and set DOMAIN and ACME_EMAIL
@@ -113,7 +114,7 @@ Requirements for automatic HTTPS:
 - Ports 80 and 443 accessible from internet
 - Valid email for Let's Encrypt notifications
 
-See [`docker-compose/README.md`](https://github.com/gl-inet/glkvm-cloud/blob/main/docker-compose/README.md) for detailed configuration options.
+See [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md) for detailed configuration options.
 
 ### 🌐 Platform Access
 
@@ -207,7 +208,7 @@ The **easiest and recommended** approach for production deployments:
 
 3. Access via your domain: `https://kvm.example.com`
 
-See [`docker-compose/README.md`](https://github.com/gl-inet/glkvm-cloud/blob/main/docker-compose/README.md#caddy-setup-automatic-https-with-lets-encrypt) for detailed instructions.
+See [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md#caddy-setup-automatic-https-with-lets-encrypt) for detailed instructions.
 
 ### Option 2: Manual SSL Certificate (Advanced)
 
@@ -328,4 +329,4 @@ https://www.your-domain.com
 - Ensure port 3478 (TCP/UDP) is open
 - Check coturn logs: `docker logs glkvm_coturn`
 
-For more help, visit: https://github.com/gl-inet/glkvm-cloud/issues
+For more help, visit: https://github.com/Admonstrator/glkvm-cloud/issues
