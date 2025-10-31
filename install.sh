@@ -112,7 +112,7 @@ check_port 3478 "TURN server" || PORTS_OK=false
 if [ "$PORTS_OK" = false ]; then
     echo ""
     warning "Some required ports are already in use."
-    read -p "Do you want to continue anyway? (y/N): " continue_anyway
+    read -p "Do you want to continue anyway? (y/N): " continue_anyway < /dev/tty
     if [[ ! "$continue_anyway" =~ ^[Yy]$ ]]; then
         error "Installation aborted. Please free up the required ports and try again."
         exit 1
@@ -190,7 +190,7 @@ echo -e "${BLUE}Do you want to use automatic HTTPS with Let's Encrypt?${NC}"
 echo "  - Choose 'yes' if you have a domain name and want automatic SSL certificates"
 echo "  - Choose 'no' for IP-based access with self-signed certificates (browser warning)"
 echo ""
-read -p "Enable automatic HTTPS with Caddy? (y/N): " use_caddy
+read -p "Enable automatic HTTPS with Caddy? (y/N): " use_caddy < /dev/tty
 
 USE_CADDY=false
 DOMAIN=""
@@ -208,7 +208,7 @@ if [[ "$use_caddy" =~ ^[Yy]$ ]]; then
     
     if [ "$CADDY_PORTS_OK" = false ]; then
         error "Required Caddy ports (80, 443, 10443) are in use. Cannot continue with Caddy setup."
-        read -p "Do you want to continue WITHOUT Caddy (self-signed certificates)? (y/N): " use_no_caddy
+        read -p "Do you want to continue WITHOUT Caddy (self-signed certificates)? (y/N): " use_no_caddy < /dev/tty
         if [[ "$use_no_caddy" =~ ^[Yy]$ ]]; then
             USE_CADDY=false
             warning "Continuing without Caddy. Self-signed certificates will be used."
@@ -226,7 +226,7 @@ if [ "$USE_CADDY" = true ]; then
     
     # Prompt for domain
     while [ -z "$DOMAIN" ]; do
-        read -p "Enter your domain name (e.g., kvm.example.com): " DOMAIN
+        read -p "Enter your domain name (e.g., kvm.example.com): " DOMAIN < /dev/tty
         if [ -z "$DOMAIN" ]; then
             warning "Domain name cannot be empty"
         fi
@@ -236,7 +236,7 @@ if [ "$USE_CADDY" = true ]; then
     echo ""
     echo "Let's Encrypt requires an email address for certificate expiration notifications."
     while [ -z "$ACME_EMAIL" ]; do
-        read -p "Enter your email address: " ACME_EMAIL
+        read -p "Enter your email address: " ACME_EMAIL < /dev/tty
         if [ -z "$ACME_EMAIL" ]; then
             warning "Email address cannot be empty"
         fi
@@ -262,7 +262,7 @@ if [ "$USE_CADDY" = true ]; then
     echo "    - Port 5912 (TCP - for device connections)"
     echo "    - Port 3478 (TCP/UDP - for TURN/WebRTC)"
     echo ""
-    read -p "Press Enter to continue once DNS and firewall are configured..."
+    read -p "Press Enter to continue once DNS and firewall are configured..." < /dev/tty
 fi
 
 # Prompt for other configuration
