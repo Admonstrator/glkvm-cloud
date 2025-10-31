@@ -88,7 +88,38 @@ Run **as root**:
 
 > Full reference: see [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)
 
-**Basic Installation (Self-signed Certificate):**
+**Quick Start (Default Settings):**
+
+The simplest way to get started - uses default settings with self-signed certificates:
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+docker compose up -d
+```
+
+This will start both the rttys and coturn services with these default credentials:
+- Web UI Password: `StrongP@ssw0rd`
+- Device Token: `DeviceTokenYouCanChangeMe`
+- TURN credentials: `glkvmcloudwebrtcuser` / `AnotherS3cret`
+
+**Custom Configuration (Self-signed Certificate):**
+
+For custom settings, use environment variables or create a `.env` file:
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+# Optional: Set custom values via environment variables
+export RTTYS_PASS="YourCustomPassword"
+export RTTYS_TOKEN="YourCustomDeviceToken"
+docker compose up -d
+```
+
+**Advanced Configuration:**
+
+For more control over settings, use the configuration in the `docker-compose/` directory:
+
 ```bash
 git clone https://github.com/Admonstrator/glkvm-cloud.git
 cd glkvm-cloud/docker-compose/

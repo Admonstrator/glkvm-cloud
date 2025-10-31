@@ -71,10 +71,60 @@
 
 ## 📦 安装
 
-使用 **root 权限** 运行以下命令安装 GLKVM 轻量云：
+我们提供 **两种** 安装方式：
+
+#### A) 一键安装（推荐）
+
+> **注意：** 一键安装脚本基于 **Docker**，会自动安装 Docker/Compose、拉取镜像、渲染配置模板并启动服务。
+
+使用 **root 权限** 运行以下命令：
 
 ```bash
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
+```
+
+#### B) Docker 手动安装
+
+> 完整参考文档请查看 [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)
+
+**快速启动（默认设置）：**
+
+最简单的方式 - 使用默认设置和自签名证书：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+docker compose up -d
+```
+
+这将使用以下默认凭据启动 rttys 和 coturn 服务：
+- Web UI 密码：`StrongP@ssw0rd`
+- 设备令牌：`DeviceTokenYouCanChangeMe`
+- TURN 凭据：`glkvmcloudwebrtcuser` / `AnotherS3cret`
+
+**自定义配置（自签名证书）：**
+
+使用环境变量或创建 `.env` 文件进行自定义设置：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+# 可选：通过环境变量设置自定义值
+export RTTYS_PASS="您的自定义密码"
+export RTTYS_TOKEN="您的自定义设备令牌"
+docker compose up -d
+```
+
+**高级配置：**
+
+如需更多配置选项，请使用 `docker-compose/` 目录：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/docker-compose/
+cp .env.example .env
+# 编辑 .env 自定义设置
+docker-compose up -d
 ```
 
 ### 使用 Caddy 自动 HTTPS（推荐用于生产环境）
