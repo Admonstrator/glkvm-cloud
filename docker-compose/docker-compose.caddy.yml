@@ -40,14 +40,13 @@ services:
     # Override volumes to exclude SSL certificates
     # When using Caddy, rttys should run in HTTP mode (no SSL)
     # Caddy terminates TLS and proxies to rttys over HTTP
-    # Only mount the template and entrypoint volumes needed for configuration
-    # SSL certificate volumes from the base docker-compose.yml are excluded
-    volumes:
+    # Use !override to replace the entire volumes array from docker-compose.yml
+    volumes: !override
       - ./templates/rttys.conf.template:/tpl/rttys.conf.tmpl:ro
       - ./scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
-    # Replace ports section to only expose device connection port
-    # Web UI and HTTP proxy ports are handled by Caddy
-    ports:
+    # Use !override to replace the entire ports array from docker-compose.yml
+    # Only expose device connection port; Caddy handles web UI and HTTP proxy ports
+    ports: !override
       - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
 
 volumes:
