@@ -37,19 +37,24 @@ services:
       # Override ports to use internal ports when behind Caddy
       RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
       RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
-    # Override volumes to exclude SSL certificates
-    # When using Caddy, rttys should run in HTTP mode (no SSL)
-    # Caddy terminates TLS and proxies to rttys over HTTP
+    # Override volumes to include sample certificates for auto-generation
+    # When using Caddy, rttys uses auto-generated certs in a named volume
+    # Caddy terminates TLS externally, so these are only for rttys internal use
     # Use !override to replace the entire volumes array from docker-compose.yml
     volumes: !override
       - ./templates/rttys.conf.template:/tpl/rttys.conf.tmpl:ro
       - ./scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - ./templates/sample_cert.pem:/tpl/sample_cert.pem:ro
+      - ./templates/sample_key.pem:/tpl/sample_key.pem:ro
+      - rttys_certs:/home/certificate
     # Use !override to replace the entire ports array from docker-compose.yml
     # Only expose device connection port; Caddy handles web UI and HTTP proxy ports
     ports: !override
       - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
 
 volumes:
+  rttys_certs:
+    driver: local
   caddy_data:
     driver: local
   caddy_config:

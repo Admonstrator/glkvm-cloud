@@ -59,6 +59,37 @@ case "$1" in
     : "${RTTYS_HTTP_PROXY_PORT:=10443}"
     : "${TURN_PORT:=3478}"
 
+    # Generate self-signed certificates if they don't exist
+    # This is needed for older rttys binaries that always try to load certificates
+    # When using Caddy, these certs are for internal use only (Caddy terminates TLS externally)
+    if [ ! -f "/home/certificate/glkvm_cer" ]; then
+      echo "Setting up SSL certificates for rttys..."
+      mkdir -p /home/certificate
+      
+      # Try to generate with openssl if available
+      if command -v openssl >/dev/null 2>&1; then
+        openssl req -x509 -newkey rsa:2048 -nodes \
+          -keyout /home/certificate/glkvm_key \
+          -out /home/certificate/glkvm_cer \
+          -days 3650 \
+          -subj "/CN=localhost" >/dev/null 2>&1
+      fi
+      
+      # Fallback: use sample certificates from templates
+      if [ ! -f "/home/certificate/glkvm_cer" ] && [ -f "/tpl/sample_cert.pem" ]; then
+        echo "Using sample certificates..."
+        cp /tpl/sample_cert.pem /home/certificate/glkvm_cer
+        cp /tpl/sample_key.pem /home/certificate/glkvm_key
+      fi
+      
+      if [ -f "/home/certificate/glkvm_cer" ]; then
+        echo "SSL certificates ready"
+      else
+        echo "ERROR: Failed to setup certificates"
+        exit 1
+      fi
+    fi
+
     render /tpl/rttys.conf.tmpl /home/rttys.conf \
       RTTYS_TOKEN RTTYS_PASS \
       GLKVM_ACCESS_IP TURN_PORT TURN_USER TURN_PASS \
