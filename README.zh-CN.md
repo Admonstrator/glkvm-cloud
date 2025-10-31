@@ -127,15 +127,35 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-### 使用 Caddy 自动 HTTPS（推荐用于生产环境）
+**生产环境部署（使用 Caddy 自动 HTTPS）：**
 
-GLKVM 轻量云现在支持使用 Caddy 实现自动 HTTPS/TLS 证书管理。
+使用 Caddy 配置实现自动 Let's Encrypt SSL 证书：
 
-**主要优势：**
-- ✅ 自动从 Let's Encrypt 获取和续期 SSL 证书
-- ✅ 无需手动管理证书
-- ✅ 内置 HTTP 到 HTTPS 自动重定向
-- ✅ 支持 HTTP/3
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+# 设置您的域名和 Let's Encrypt 邮箱
+export DOMAIN=kvm.example.com
+export ACME_EMAIL=admin@example.com
+docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+```
+
+这将会：
+- 自动从 Let's Encrypt 获取 SSL 证书
+- 处理 HTTP 到 HTTPS 的重定向
+- 自动管理证书续期
+- 支持 HTTP/3 (QUIC)
+
+**要求：**
+- 域名需要指向服务器 IP
+- 需要开放 80 和 443 端口
+- 需要提供有效的邮箱地址
+
+详细配置选项请参阅 [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)。
+
+### 使用 Caddy 自动 HTTPS（旧方式）
+
+如果您更喜欢使用 `docker-compose/` 目录中的配置：
 
 **快速配置：**
 

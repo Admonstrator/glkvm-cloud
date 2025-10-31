@@ -130,15 +130,22 @@ docker-compose up -d
 
 **Production Installation (Automatic HTTPS with Caddy):**
 
-For production deployments with automatic Let's Encrypt SSL certificates:
+For production deployments with automatic Let's Encrypt SSL certificates, use the Caddy configuration:
 
 ```bash
 git clone https://github.com/Admonstrator/glkvm-cloud.git
-cd glkvm-cloud/docker-compose/
-cp .env.example .env
-# Edit .env and set DOMAIN and ACME_EMAIL
-docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+cd glkvm-cloud/
+# Set your domain and email for Let's Encrypt
+export DOMAIN=kvm.example.com
+export ACME_EMAIL=admin@example.com
+docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
 ```
+
+This will:
+- Automatically obtain SSL certificates from Let's Encrypt
+- Handle HTTP to HTTPS redirects
+- Manage certificate renewals automatically
+- Support HTTP/3 (QUIC)
 
 Requirements for automatic HTTPS:
 - Domain name pointing to your server IP
