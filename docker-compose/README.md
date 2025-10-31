@@ -179,6 +179,7 @@ This architecture is secure because:
 2. All external traffic is encrypted via Caddy's Let's Encrypt TLS certificates
 3. Internal traffic between Caddy and rttys is also encrypted using HTTPS with self-signed certificates
 4. Caddy is configured to accept self-signed certificates from rttys (tls_insecure_skip_verify)
+   - ⚠️ Note: `tls_insecure_skip_verify` is safe here because Caddy and rttys communicate within an isolated Docker network that is not accessible from outside. This setting would NOT be appropriate for external connections.
 5. This provides defense-in-depth with encryption at both external and internal boundaries
 
 **Port Configuration:**
