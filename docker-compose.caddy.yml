@@ -1,0 +1,57 @@
+# Docker Compose override file for Caddy setup
+# Use this file to enable Caddy reverse proxy with automatic HTTPS
+# 
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+#
+# Requirements:
+#   - Set DOMAIN and ACME_EMAIL environment variables
+#   - Ensure ports 80 and 443 are accessible from the internet
+#   - Domain must point to your server's public IP
+
+services:
+  # When Caddy is used, rttys uses internal ports that Caddy will proxy to
+  rttys:
+    environment:
+      # Override ports to use internal ports when behind Caddy
+      RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
+      RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
+    ports:
+      # Only expose device connection port
+      # Caddy will handle web UI (443) and HTTP proxy (10443) ports
+      - "${RTTYS_DEVICE_PORT:-5912}:${RTTYS_DEVICE_PORT:-5912}"
+
+  # Caddy reverse proxy with automatic HTTPS/TLS
+  # This redefines the service from docker-compose.yml without the profile
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:latest}
+    container_name: glkvm_caddy
+    restart: always
+    ports:
+      # HTTP for ACME challenges and automatic redirect to HTTPS
+      - "80:80"
+      # HTTPS for secure access
+      - "443:443"
+      - "443:443/udp"  # HTTP/3 support
+      # HTTP Proxy port (proxied by Caddy with TLS)
+      - "10443:10443"
+    volumes:
+      - ./docker-compose/templates/Caddyfile.template:/tpl/Caddyfile.tmpl:ro
+      - ./docker-compose/scripts/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      RTTYS_WEBUI_INTERNAL_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
+      RTTYS_HTTP_PROXY_INTERNAL_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+    command: ["caddy"]
+    depends_on:
+      - rttys
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local

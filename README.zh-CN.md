@@ -71,21 +71,91 @@
 
 ## 📦 安装
 
-使用 **root 权限** 运行以下命令安装 GLKVM 轻量云：
+我们提供 **两种** 安装方式：
+
+#### A) 一键安装（推荐）
+
+> **注意：** 一键安装脚本基于 **Docker**，会自动安装 Docker/Compose、拉取镜像、渲染配置模板并启动服务。
+
+使用 **root 权限** 运行以下命令：
 
 ```bash
 ( command -v curl >/dev/null 2>&1 && curl -fsSL https://kvm-cloud.gl-inet.com/selfhost/install.sh || wget -qO- https://kvm-cloud.gl-inet.com/selfhost/install.sh ) | sudo bash
 ```
 
-### 使用 Caddy 自动 HTTPS（推荐用于生产环境）
+#### B) Docker 手动安装
 
-GLKVM 轻量云现在支持使用 Caddy 实现自动 HTTPS/TLS 证书管理。
+> 完整参考文档请查看 [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)
 
-**主要优势：**
-- ✅ 自动从 Let's Encrypt 获取和续期 SSL 证书
-- ✅ 无需手动管理证书
-- ✅ 内置 HTTP 到 HTTPS 自动重定向
-- ✅ 支持 HTTP/3
+**快速启动（默认设置）：**
+
+最简单的方式 - 使用默认设置和自签名证书：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+docker compose up -d
+```
+
+这将使用以下默认凭据启动 rttys 和 coturn 服务：
+- Web UI 密码：`StrongP@ssw0rd`
+- 设备令牌：`DeviceTokenYouCanChangeMe`
+- TURN 凭据：`glkvmcloudwebrtcuser` / `AnotherS3cret`
+
+**自定义配置（自签名证书）：**
+
+使用环境变量或创建 `.env` 文件进行自定义设置：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+# 可选：通过环境变量设置自定义值
+export RTTYS_PASS="您的自定义密码"
+export RTTYS_TOKEN="您的自定义设备令牌"
+docker compose up -d
+```
+
+**高级配置：**
+
+如需更多配置选项，请使用 `docker-compose/` 目录：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/docker-compose/
+cp .env.example .env
+# 编辑 .env 自定义设置
+docker-compose up -d
+```
+
+**生产环境部署（使用 Caddy 自动 HTTPS）：**
+
+使用 Caddy 配置实现自动 Let's Encrypt SSL 证书：
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+# 设置您的域名和 Let's Encrypt 邮箱
+export DOMAIN=kvm.example.com
+export ACME_EMAIL=admin@example.com
+docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+```
+
+这将会：
+- 自动从 Let's Encrypt 获取 SSL 证书
+- 处理 HTTP 到 HTTPS 的重定向
+- 自动管理证书续期
+- 支持 HTTP/3 (QUIC)
+
+**要求：**
+- 域名需要指向服务器 IP
+- 需要开放 80 和 443 端口
+- 需要提供有效的邮箱地址
+
+详细配置选项请参阅 [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)。
+
+### 使用 Caddy 自动 HTTPS（旧方式）
+
+如果您更喜欢使用 `docker-compose/` 目录中的配置：
 
 **快速配置：**
 

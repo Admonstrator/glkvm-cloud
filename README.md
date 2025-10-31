@@ -88,7 +88,38 @@ Run **as root**:
 
 > Full reference: see [`docker-compose/README.md`](https://github.com/Admonstrator/glkvm-cloud/blob/main/docker-compose/README.md)
 
-**Basic Installation (Self-signed Certificate):**
+**Quick Start (Default Settings):**
+
+The simplest way to get started - uses default settings with self-signed certificates:
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+docker compose up -d
+```
+
+This will start both the rttys and coturn services with these default credentials:
+- Web UI Password: `StrongP@ssw0rd`
+- Device Token: `DeviceTokenYouCanChangeMe`
+- TURN credentials: `glkvmcloudwebrtcuser` / `AnotherS3cret`
+
+**Custom Configuration (Self-signed Certificate):**
+
+For custom settings, use environment variables or create a `.env` file:
+
+```bash
+git clone https://github.com/Admonstrator/glkvm-cloud.git
+cd glkvm-cloud/
+# Optional: Set custom values via environment variables
+export RTTYS_PASS="YourCustomPassword"
+export RTTYS_TOKEN="YourCustomDeviceToken"
+docker compose up -d
+```
+
+**Advanced Configuration:**
+
+For more control over settings, use the configuration in the `docker-compose/` directory:
+
 ```bash
 git clone https://github.com/Admonstrator/glkvm-cloud.git
 cd glkvm-cloud/docker-compose/
@@ -99,15 +130,22 @@ docker-compose up -d
 
 **Production Installation (Automatic HTTPS with Caddy):**
 
-For production deployments with automatic Let's Encrypt SSL certificates:
+For production deployments with automatic Let's Encrypt SSL certificates, use the Caddy configuration:
 
 ```bash
 git clone https://github.com/Admonstrator/glkvm-cloud.git
-cd glkvm-cloud/docker-compose/
-cp .env.example .env
-# Edit .env and set DOMAIN and ACME_EMAIL
-docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+cd glkvm-cloud/
+# Set your domain and email for Let's Encrypt
+export DOMAIN=kvm.example.com
+export ACME_EMAIL=admin@example.com
+docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
 ```
+
+This will:
+- Automatically obtain SSL certificates from Let's Encrypt
+- Handle HTTP to HTTPS redirects
+- Manage certificate renewals automatically
+- Support HTTP/3 (QUIC)
 
 Requirements for automatic HTTPS:
 - Domain name pointing to your server IP
