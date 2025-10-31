@@ -1,6 +1,41 @@
 # Quick Start
 
- This guide shows how to deploy **glkvm-cloud** using the provided Docker Compose environment template. 
+This guide shows how to deploy **glkvm-cloud** using the provided Docker Compose environment template.
+
+## Installation Methods
+
+### Method 1: One-Line Installer (Recommended)
+
+The easiest way to install GLKVM Cloud is using our automated installer script. This script will:
+- Install Docker and Docker Compose if needed
+- Clone the repository automatically
+- Guide you through configuration with interactive prompts
+- Check port availability
+- Start all services
+- Verify container health
+
+**Run as root:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Admonstrator/glkvm-cloud/main/install.sh | sudo bash
+```
+
+Or with wget:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/Admonstrator/glkvm-cloud/main/install.sh | sudo bash
+```
+
+The installer will ask you:
+1. Whether to use Caddy for automatic HTTPS (requires a domain name)
+2. If using Caddy: your domain name and email for Let's Encrypt
+3. Generate secure passwords automatically
+
+**That's it!** The script handles everything and provides you with access credentials at the end.
+
+### Method 2: Manual Docker Installation
+
+If you prefer manual control or need to customize the installation:
 
 1. **Clone the repository and prepare the environment template**
 
@@ -131,14 +166,28 @@ When enabled, Caddy will:
 - Serve as a reverse proxy to the rttys container with TLS termination
 - Support HTTP/3 (QUIC) for better performance
 
+**Important: Backend Communication**
+
+🔒 **Caddy terminates TLS and communicates with rttys over HTTP (not HTTPS)** for optimal performance:
+- External clients connect to Caddy via HTTPS (secure)
+- Caddy proxies requests to rttys via HTTP within the Docker network
+- No SSL/TLS overhead between Caddy and rttys
+- All containers communicate over Docker's internal network (isolated from external access)
+
+This architecture is secure because:
+1. Docker network is isolated and not accessible from outside
+2. All external traffic is encrypted via Caddy's TLS
+3. Internal HTTP communication is fast and reduces CPU overhead
+4. This is the standard practice for reverse proxy deployments
+
 **Port Configuration:**
 
 When Caddy is enabled, the port mapping changes as follows:
 
 - **External (exposed to internet):**
   - Port 80 (HTTP) → Caddy handles ACME challenges and redirects to HTTPS
-  - Port 443 (HTTPS) → Caddy reverse proxy to rttys Web UI
-  - Port 10443 (HTTPS) → Caddy reverse proxy to rttys HTTP Proxy
+  - Port 443 (HTTPS) → Caddy reverse proxy to rttys Web UI (backend: HTTP)
+  - Port 10443 (HTTPS) → Caddy reverse proxy to rttys HTTP Proxy (backend: HTTP)
   - Port 5912 (TCP) → Direct connection to rttys for device connections
 
 - **Internal (within Docker network only):**
@@ -151,6 +200,7 @@ This architecture ensures that:
 2. rttys doesn't need to manage SSL certificates when behind Caddy
 3. No port conflicts between Caddy and rttys
 4. Device connections (port 5912) bypass Caddy for optimal performance
+5. **No SSL between Caddy and rttys** - HTTP is used for internal communication
 
 ### Wildcard Certificates (Optional)
 
