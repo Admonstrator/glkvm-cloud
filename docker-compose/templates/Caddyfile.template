@@ -5,19 +5,21 @@
     # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
+# Snippet for common reverse proxy settings
+(proxy_settings) {
+    header_up Host {host}
+    header_up X-Real-IP {remote}
+    
+    # WebSocket support for SSH/terminal and HTTP proxying
+    header_up Connection {>Connection}
+    header_up Upgrade {>Upgrade}
+}
+
 # Main web interface
 {{DOMAIN}} {
     # Automatic HTTPS via Let's Encrypt (HTTP-01 challenge)
-    
-    # Reverse proxy to rttys web UI
     reverse_proxy rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
-        # Preserve original host header
-        header_up Host {host}
-        header_up X-Real-IP {remote}
-        
-        # WebSocket support for SSH/terminal
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
+        import proxy_settings
     }
 }
 
@@ -25,12 +27,7 @@
 {{DOMAIN}}:10443 {
     # Proxy to rttys HTTP proxy port
     reverse_proxy rttys:{{RTTYS_HTTP_PROXY_INTERNAL_PORT}} {
-        header_up Host {host}
-        header_up X-Real-IP {remote}
-        
-        # WebSocket support
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
+        import proxy_settings
     }
 }
 
@@ -41,10 +38,6 @@
     # See: https://caddyserver.com/docs/automatic-https#dns-challenge
     
     reverse_proxy rttys:{{RTTYS_WEBUI_INTERNAL_PORT}} {
-        header_up Host {host}
-        header_up X-Real-IP {remote}
-        
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
+        import proxy_settings
     }
 }

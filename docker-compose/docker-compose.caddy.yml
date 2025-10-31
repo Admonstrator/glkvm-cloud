@@ -39,6 +39,8 @@ services:
       # Override ports to use internal ports when behind Caddy
       RTTYS_WEBUI_PORT: ${RTTYS_WEBUI_INTERNAL_PORT:-8443}
       RTTYS_HTTP_PROXY_PORT: ${RTTYS_HTTP_PROXY_INTERNAL_PORT:-18443}
+    # Use !override to replace the entire ports section from base docker-compose.yml
+    # This prevents Docker Compose from merging arrays and ensures only port 5912 is exposed
     ports: !override
       # Only expose device connection port - do not expose web UI or HTTP proxy ports
       # as Caddy will handle those
